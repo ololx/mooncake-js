@@ -35,16 +35,16 @@ let canvas = document.getElementById('canvas');
 let fpsInput = document.getElementById('fpsInput');
 let speedInput = document.getElementById('speedInput');
 let ball = new Ball(canvas, 20, parseInt(speedInput.value, 10));
-let gameLoop = new GameLoop(parseInt(fpsInput.value, 10), ball);
+let gameLoop;
 
 function startGame() {
-  if (gameLoop.isGameRunning()) {
+  if (gameLoop && gameLoop.isGameRunning()) {
     gameLoop.stop();
   }
 
   ball.setSpeed(parseInt(speedInput.value, 10));
-  gameLoop = new GameLoop(parseInt(fpsInput.value, 10), ball);
-  
+  gameLoop = new GameLoop(parseInt(fpsInput.value, 10), ball, new FpsCounter((fps) => {document.getElementById('fps').innerText = fps;}));
+
   gameLoop.run();
 }
 
@@ -53,3 +53,5 @@ function stopGame() {
     gameLoop.stop();
   }
 }
+
+//document.getElementById('fps').innerText = this.fps;
