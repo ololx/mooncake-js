@@ -14,20 +14,48 @@ class FpsCounter {
         this.#renderCallback = renderCallback;
     }
 
-    update() {
+    reset() {
+        this.#lastFpsUpdateTime = Date.now();
+        this.#currentFrames = 0;
+        this.#fps = 0;
+    }
+
+    inc() {
         const currentTime = Date.now();
 
         if (currentTime - this.#lastFpsUpdateTime >= this.#fpsUpdateIntervalMS) {
             this.#fps = this.#currentFrames;
             this.#currentFrames = 0;
             this.#lastFpsUpdateTime = currentTime;
+            this.#renderCallback(this.#fps);
         }
 
         this.#currentFrames++;
     }
+}
 
-    render() {
-        this.#renderCallback(this.#fps);
+class GameController {
+
+    #gameObjects;
+
+    constructor(gameObjects = []) {
+        gameObjects.forEach(gameObject => {
+            if (typeof gameObject.update !== 'function' || typeof gameObject.render !== 'function') {
+                console.error(`Object ${gameObject} must have a processUpdate and processRender methods`);
+            }
+        });
+
+        this.#gameObjects = gameObjects;
+    }
+
+    processInput() {}
+
+    processUpdate(elapsedTime) {
+        this.#gameObjects.forEach(gameObject => gameObject.update(elapsedTime));
+    }
+
+    processRender() {
+        this.#gameObjects.forEach(gameObject => gameObject.render());
     }
 }
 
@@ -35,44 +63,48 @@ class GameLoop {
     #targetFPS;
     #frameDuration;
     #status;
-    #ball;
+    #gameController;
     #previousTime = null;
     #lag = 0;
-    #requestId = null;
+    #animationFrame = null;
     #fpsCounter;
 
-    constructor(maxFPS, ball, fpsCounter) {
+    constructor(maxFPS, gameController, fpsCounter) {
         this.#status = Status.STOPPED;
         this.#targetFPS = maxFPS;
         this.#frameDuration = 1000 / maxFPS;
-        this.#ball = ball;
+        this.#gameController = gameController;
         this.#fpsCounter = fpsCounter;
     }
 
-    run() {
+    start() {
         this.#status = Status.RUNNING;
         this.#previousTime = Date.now();
-        this.#gameLoop();
+        this.#loop();
     }
 
     stop() {
         this.#status = Status.STOPPED;
-        cancelAnimationFrame(this.#requestId);
+        cancelAnimationFrame(this.#animationFrame);
     }
 
-    isGameRunning() {
+    isActive() {
         return this.#status === Status.RUNNING;
     }
 
-    processInput() {
+    #processInput() {}
+
+    #processUpdate(elapsedTime) {
+        this.#gameController.processUpdate(elapsedTime);
     }
 
-    updateFPS() {
-        this.#fpsCounter.update();
+    #processRender() {
+        this.#fpsCounter.inc();
+        this.#gameController.processRender();
     }
 
-    #gameLoop() {
-        if (!this.isGameRunning()) {
+    #loop() {
+        if (!this.isActive()) {
             return;
         }
 
@@ -83,18 +115,16 @@ class GameLoop {
             this.#previousTime = currentTime - (elapsedTime % this.#frameDuration);
             this.#lag += elapsedTime;
 
-            this.processInput();
+            this.#processInput();
 
             while (this.#lag >= this.#frameDuration) {
-                this.#ball.update(this.#frameDuration);
+                this.#processUpdate(this.#frameDuration / 1000);
                 this.#lag -= this.#frameDuration;
             }
 
-            this.#ball.render();
-            this.#fpsCounter.update();
-            this.#fpsCounter.render();
+           this.#processRender();
         }
 
-        this.#requestId = requestAnimationFrame(this.#gameLoop.bind(this));
+        this.#animationFrame = requestAnimationFrame(this.#loop.bind(this));
     }
 }

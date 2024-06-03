@@ -10,7 +10,7 @@ class Ball {
   }
 
   update(elapsedTime) {
-    const step = this.speed * elapsedTime / 1000;
+    const step = this.speed * elapsedTime;
     this.x += step * this.direction;
     if (this.x + this.radius >= this.canvas.width || this.x - this.radius <= 0) {
       this.direction *= -1;
@@ -35,6 +35,7 @@ let canvas = document.getElementById('canvas');
 let fpsInput = document.getElementById('fpsInput');
 let speedInput = document.getElementById('speedInput');
 let ball = new Ball(canvas, 20, parseInt(speedInput.value, 10));
+let gc = new GameController([ball]);
 let gameLoop;
 
 function startGame() {
@@ -43,9 +44,9 @@ function startGame() {
   }
 
   ball.setSpeed(parseInt(speedInput.value, 10));
-  gameLoop = new GameLoop(parseInt(fpsInput.value, 10), ball, new FpsCounter((fps) => {document.getElementById('fps').innerText = fps;}));
+  gameLoop = new GameLoop(parseInt(fpsInput.value, 10), gc, new FpsCounter((fps) => {document.getElementById('fps').innerText = fps;}));
 
-  gameLoop.run();
+  gameLoop.start();
 }
 
 function stopGame() {
