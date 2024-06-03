@@ -1,137 +1,130 @@
-const GameStatus = {
-  RUNNING: 'RUNNING',
-  STOPPED: 'STOPPED'
-};
+const Status = Object.freeze({
+    RUNNING: 'RUNNING',
+    STOPPED: 'STOPPED'
+});
 
-class Ball {
-  constructor(canvas, radius, speed) {
-    this.canvas = canvas;
-    this.context = canvas.getContext('2d');
-    this.radius = radius;
-    this.speed = speed;
-    this.x = radius;
-    this.y = canvas.height / 2;
-    this.direction = 1;
-  }
+class FpsCounter {
+    #lastFpsUpdateTime = Date.now();
+    #fpsUpdateIntervalMS = 1000;
+    #currentFrames = 0;
+    #fps = 0;
+    #renderCallback;
 
-  update(elapsedTime) {
-    const step = this.speed * elapsedTime / 1000;
-    this.x += step * this.direction;
-    if (this.x + this.radius >= this.canvas.width || this.x - this.radius <= 0) {
-      this.direction *= -1;
+    constructor(renderCallback = (fps) => {}) {
+        this.#renderCallback = renderCallback;
     }
-  }
 
-  render() {
-    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.context.beginPath();
-    this.context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    this.context.fillStyle = 'black';
-    this.context.fill();
-    this.context.closePath();
-  }
+    reset() {
+        this.#lastFpsUpdateTime = Date.now();
+        this.#currentFrames = 0;
+        this.#fps = 0;
+    }
 
-  setSpeed(speed) {
-    this.speed = speed;
-  }
+    inc() {
+        const currentTime = Date.now();
+
+        if (currentTime - this.#lastFpsUpdateTime >= this.#fpsUpdateIntervalMS) {
+            this.#fps = this.#currentFrames;
+            this.#currentFrames = 0;
+            this.#lastFpsUpdateTime = currentTime;
+            this.#renderCallback(this.#fps);
+        }
+
+        this.#currentFrames++;
+    }
+}
+
+class GameController {
+
+    #gameObjects;
+
+    constructor(gameObjects = []) {
+        gameObjects.forEach(gameObject => {
+            if (typeof gameObject.update !== 'function' || typeof gameObject.render !== 'function') {
+                console.error(`Object ${gameObject} must have a processUpdate and processRender methods`);
+            }
+        });
+
+        this.#gameObjects = gameObjects;
+    }
+
+    processInput() {}
+
+    processUpdate(elapsedTime) {
+        this.#gameObjects.forEach(gameObject => gameObject.update(elapsedTime));
+    }
+
+    processRender() {
+        this.#gameObjects.forEach(gameObject => gameObject.render());
+    }
 }
 
 class GameLoop {
-  constructor(maxFPS, ball) {
-    this.logger = console;
-    this.status = GameStatus.STOPPED;
-    this.targetFPS = maxFPS;
-    this.frameDuration = 1000 / maxFPS;
-    this.ball = ball;
-    this.previousTime = null;
-    this.lag = 0;
-    this.requestId = null;
+    #targetFPS;
+    #frameDuration;
+    #status;
+    #gameController;
+    #previousTime = null;
+    #lag = 0;
+    #animationFrame = null;
+    #fpsCounter;
 
-    this.frames = 0;
-    this.fps = 0;
-    this.lastFPSUpdate = Date.now();
-    this.fpsInterval = 1000;
-  }
-
-  run() {
-    this.status = GameStatus.RUNNING;
-    this.previousTime = Date.now();
-    this.gameLoop();
-  }
-
-  stop() {
-    this.status = GameStatus.STOPPED;
-    cancelAnimationFrame(this.requestId);
-  }
-
-  isGameRunning() {
-    return this.status === GameStatus.RUNNING;
-  }
-
-  processInput() {}
-
-  updateFPS() {
-    const currentTime = Date.now();
-    if (currentTime - this.lastFPSUpdate >= this.fpsInterval) {
-      this.fps = this.frames;
-      this.frames = 0;
-      this.lastFPSUpdate = currentTime;
-      document.getElementById('fps').innerText = this.fps;
-    }
-    this.frames++;
-  }
-
-  gameLoop() {
-    if (!this.isGameRunning()) {
-      return;
+    constructor(maxFPS, gameController, fpsCounter) {
+        this.#status = Status.STOPPED;
+        this.#targetFPS = maxFPS;
+        this.#frameDuration = 1000 / maxFPS;
+        this.#gameController = gameController;
+        this.#fpsCounter = fpsCounter;
     }
 
-    const currentTime = Date.now();
-    const elapsedTime = currentTime - this.previousTime;
-
-    if (elapsedTime >= this.frameDuration) {
-      this.previousTime = currentTime - (elapsedTime % this.frameDuration);
-      this.lag += elapsedTime;
-
-      this.processInput();
-
-      while (this.lag >= this.frameDuration) {
-        this.ball.update(this.frameDuration);
-        this.lag -= this.frameDuration;
-      }
-
-      this.ball.render();
-      this.updateFPS();
+    start() {
+        this.#status = Status.RUNNING;
+        this.#previousTime = Date.now();
+        this.#loop();
     }
 
-    this.requestId = requestAnimationFrame(this.gameLoop.bind(this));
-  }
+    stop() {
+        this.#status = Status.STOPPED;
+        cancelAnimationFrame(this.#animationFrame);
+    }
 
-  setMaxFPS(maxFPS) {
-    this.targetFPS = maxFPS;
-    this.frameDuration = 1000 / maxFPS;
-  }
-}
+    isActive() {
+        return this.#status === Status.RUNNING;
+    }
 
-let canvas = document.getElementById('canvas');
-let fpsInput = document.getElementById('fpsInput');
-let speedInput = document.getElementById('speedInput');
-let ball = new Ball(canvas, 20, parseInt(speedInput.value, 10));
-let gameLoop = new GameLoop(parseInt(fpsInput.value, 10), ball);
+    #processInput() {}
 
-function startGame() {
-  if (gameLoop.isGameRunning()) {
-    gameLoop.stop();
-  }
+    #processUpdate(elapsedTime) {
+        this.#gameController.processUpdate(elapsedTime);
+    }
 
-  ball.setSpeed(parseInt(speedInput.value, 10));
-  gameLoop.setMaxFPS(parseInt(fpsInput.value, 10));
-  
-  gameLoop.run();
-}
+    #processRender() {
+        this.#fpsCounter.inc();
+        this.#gameController.processRender();
+    }
 
-function stopGame() {
-  if (gameLoop) {
-    gameLoop.stop();
-  }
+    #loop() {
+        if (!this.isActive()) {
+            return;
+        }
+
+        const currentTime = Date.now();
+        const elapsedTime = currentTime - this.#previousTime;
+
+        if (elapsedTime >= this.#frameDuration) {
+            this.#previousTime = currentTime - (elapsedTime % this.#frameDuration);
+            this.#lag += elapsedTime;
+
+            this.#processInput();
+
+            while (this.#lag >= this.#frameDuration) {
+                this.#processUpdate(this.#frameDuration / 1000);
+                this.#lag -= this.#frameDuration;
+            }
+
+           this.#processRender();
+        }
+
+        this.#animationFrame = requestAnimationFrame(this.#loop.bind(this));
+    }
 }
