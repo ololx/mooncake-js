@@ -4,6 +4,7 @@ const Status = Object.freeze({
 });
 
 class FpsCounter {
+
     #lastFpsUpdateTime = Date.now();
     #fpsUpdateIntervalMS = 1000;
     #currentFrames = 0;
@@ -48,7 +49,8 @@ class GameController {
         this.#gameObjects = gameObjects;
     }
 
-    processInput() {}
+    processInput() {
+    }
 
     processUpdate(elapsedTime) {
         this.#gameObjects.forEach(gameObject => gameObject.update(elapsedTime));
@@ -60,19 +62,19 @@ class GameController {
 }
 
 class GameLoop {
+
+    #gameController;
+    #fpsCounter;
+    #animationFrame;
+    #status = Status.STOPPED;
+    #previousTime;
     #targetFPS;
     #frameDuration;
-    #status;
-    #gameController;
-    #previousTime = null;
     #lag = 0;
-    #animationFrame = null;
-    #fpsCounter;
 
-    constructor(maxFPS, gameController, fpsCounter) {
-        this.#status = Status.STOPPED;
-        this.#targetFPS = maxFPS;
-        this.#frameDuration = 1000 / maxFPS;
+    constructor(fpsLimit = 1, gameController, fpsCounter) {
+        this.#targetFPS = fpsLimit;
+        this.#frameDuration = 1000 / fpsLimit;
         this.#gameController = gameController;
         this.#fpsCounter = fpsCounter;
     }
@@ -92,7 +94,9 @@ class GameLoop {
         return this.#status === Status.RUNNING;
     }
 
-    #processInput() {}
+    #processInput() {
+        this.#gameController.processInput();
+    }
 
     #processUpdate(elapsedTime) {
         this.#gameController.processUpdate(elapsedTime);
@@ -122,7 +126,7 @@ class GameLoop {
                 this.#lag -= this.#frameDuration;
             }
 
-           this.#processRender();
+            this.#processRender();
         }
 
         this.#animationFrame = requestAnimationFrame(this.#loop.bind(this));
