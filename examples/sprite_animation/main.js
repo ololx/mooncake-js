@@ -1,7 +1,8 @@
 window.onload = function() {
   const canvas = document.getElementById('canvas');
-  const context = canvas.getContext('2d');
+  const context = new WebGlContext(canvas);
   const image = new Image();
+  //image.crossOrigin = "anonymous";
   image.src = 'cake.png';
 
   image.onload = function() {
@@ -24,14 +25,18 @@ window.onload = function() {
     console.log('Create sprite');
 
     let lastTime = performance.now();
-
+    let tileSize = Math.min(canvas.width / 30, canvas.height / 20);
     function gameLoop(timestamp) {
       const deltaTime = timestamp - lastTime;
       lastTime = timestamp;
 
-      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.clear(0, 0, canvas.width, canvas.height);
       sprite.update(deltaTime);
-      sprite.draw(context, canvas.width / 2 - sprite.frameWidth / 2, canvas.height / 2 - sprite.frameHeight / 2);
+      sprite.draw(context,
+          100,
+          200,
+          200, 200
+      );
 
       requestAnimationFrame(gameLoop);
     }

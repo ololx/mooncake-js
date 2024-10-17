@@ -97,5 +97,3 @@ class AnimatedSprite extends Sprite {
         );
     }
 }
-
-

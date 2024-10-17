@@ -31,6 +31,7 @@ class Animation {
 class AnimatedSprite {
     constructor(image, rows, cols, animations) {
         this.image = image;
+        this.textture = null;
         this.rows = rows;
         this.cols = cols;
         this.frameWidth = image.width / cols;
@@ -53,19 +54,22 @@ class AnimatedSprite {
         }
     }
 
-    draw(context, x, y) {
+    draw(context, x, y, dWidth, dHeight) {
         if (!this.currentAnimation) {
             return;
         }
 
+        if (!this.textture) {
+            this.textture = context.createTexture(this.image);
+        }
+
         const frame = this.currentAnimation.getCurrentFrame();
+
         const sx = frame.col * this.frameWidth;
         const sy = frame.row * this.frameHeight;
+        const sWidth = this.frameWidth;
+        const sHeight = this.frameHeight;
 
-        context.drawImage(
-            this.image,
-            sx, sy, this.frameWidth, this.frameHeight,
-            x, y, this.frameWidth, this.frameHeight
-        );
+        context.drawImage(this.textture, sx, sy, sWidth, sHeight, x, y, dWidth, dHeight);
     }
 }
