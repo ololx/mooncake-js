@@ -1,12 +1,24 @@
-class Sprite {
+import { Vector2 } from 'math.js';
 
-    constructor(image = new Image()) {
-        this.image = image;
+class GraphicObject {
+
+    constructor(render, position = Vector2.zero()) {
+        this.render = render;
     }
 
-    draw(context, position = {x: 0, y: 0}, scale = {w: 1, h: 1}, offset = {x: 0, y: 0}) {
-        context.drawImage(
-            this.image,
+    draw() {};
+}
+
+class Sprite extends GraphicObject {
+
+    constructor(render, texture = {origin: null, width: 0, height: 0}) {
+        super(render);
+        this.texture = texture;
+    }
+
+    draw(position = {x: 0, y: 0}) {
+        this.render.drawImage(
+            this.texture,
             0, 0,
             this.image.width, this.image.height,
             position.x + offset.x, position.y + offset.y,
@@ -57,14 +69,13 @@ class AnimatedSprite extends Sprite {
         this.frameHeight = image.height / rows;
         this.animations = animations;
         this.currentAnimation = animations["idle"];
-        console.log(this);
     }
 
     switchAnimation(key) {
         if (this.animations[key]) {
             this.currentAnimation = this.animations[key];
         } else {
-            console.error(`Animation ${key} does not exist`);
+            console.warn(`Animation ${key} does not exist`);
         }
     }
 
