@@ -9,18 +9,18 @@ window.onload = function() {
     console.log('Image loaded successfully');
 
     const idleFrames = [
-      new Frame(0, 0, 150),
-      new Frame(1, 0, 100),
-      new Frame(2, 0, 150),
-      new Frame(3, 0, 100),
-      new Frame(4, 0, 150)
+      new SpriteFrame(0, 0, 150),
+      new SpriteFrame(1, 0, 100),
+      new SpriteFrame(2, 0, 150),
+      new SpriteFrame(3, 0, 100),
+      new SpriteFrame(4, 0, 150)
     ];
 
     const animations = {
-      idle: new Animation(idleFrames)
+      idle: new SpriteAnimation(idleFrames)
     };
 
-    const sprite = new AnimatedSprite(image, 1, 5, animations);
+    const sprite = new AnimatedSprite(context, Vector2.of((canvas.width / 2) - 102, (canvas.height / 2) + 102), new GraphicParameters({width: 1020, height: 204}), context.createTexture(image), 1, 5, animations);
     sprite.switchAnimation('idle');
     console.log('Create sprite');
 
@@ -32,11 +32,7 @@ window.onload = function() {
 
       context.clear(0, 0, canvas.width, canvas.height);
       sprite.update(deltaTime);
-      sprite.draw(context,
-          100,
-          200,
-          200, 200
-      );
+      sprite.draw();
 
       requestAnimationFrame(gameLoop);
     }

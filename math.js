@@ -1,4 +1,4 @@
-export class Vector2 {
+class Vector2 {
 
     #x = 0;
 
@@ -10,19 +10,19 @@ export class Vector2 {
     }
 
     static zero() {
-        return Vector2.of(0, 0);
+        return new Vector2(0, 0);
     }
 
     static of(x, y) {
-        return Vector2.of(x, y);
+        return new Vector2(x, y);
     }
 
     static ofX(x) {
-        return Vector2.of(x, 0);
+        return new Vector2(x, 0);
     }
 
     static ofY(x) {
-        return Vector2.of(0, y);
+        return new Vector2(0, y);
     }
 
     get x() {
@@ -31,14 +31,6 @@ export class Vector2 {
 
     get y() {
         return this.#y;
-    }
-
-    set x(value) {
-        this.#x = value;
-    }
-
-    set y(value) {
-        this.#y = value;
     }
 
     add(vector) {
