@@ -1,21 +1,42 @@
-class Sprite {
+//import { Vector2 } from 'math.js';
 
-    constructor(image = new Image()) {
-        this.image = image;
+class GraphicParameters {
+
+    constructor(size = { width: 0, height: 0 }) {
+        this.size = size;
+    }
+}
+
+class GraphicObject {
+
+    constructor(render, position = Vector2.zero(), parameters = new GraphicParameters()) {
+        this.render = render;
+        this.position = position;
+        this.parameters = parameters;
     }
 
-    draw(context, position = {x: 0, y: 0}, scale = {w: 1, h: 1}, offset = {x: 0, y: 0}) {
-        context.drawImage(
-            this.image,
+    draw() {};
+}
+
+class Sprite extends GraphicObject {
+
+    constructor(render, position = Vector2.zero(), parameters = new GraphicParameters(), texture) {
+        super(render, position, parameters);
+        this.texture = texture;
+    }
+
+    draw() {
+        this.render.drawImage(
+            this.texture,
             0, 0,
-            this.image.width, this.image.height,
-            position.x + offset.x, position.y + offset.y,
-            scale.w, scale.h
+            this.parameters.size.width, this.parameters.size.height,
+            this.position.x, this.position.y,
+            this.parameters.size.width, this.parameters.size.height
         );
     }
 }
 
-class Frame {
+class SpriteFrame {
 
     constructor(col, row, duration) {
         this.col = col;
@@ -24,7 +45,7 @@ class Frame {
     }
 }
 
-class Animation {
+class SpriteAnimation {
 
     constructor(frames) {
         this.frames = frames;
@@ -49,22 +70,21 @@ class Animation {
 
 class AnimatedSprite extends Sprite {
 
-    constructor(image, rows, cols, animations) {
-        super(image);
+    constructor(render, position = Vector2.zero(), parameters = new GraphicParameters(), texture, rows, cols, animations) {
+        super(render, position, parameters, texture);
         this.rows = rows;
         this.cols = cols;
-        this.frameWidth = image.width / cols;
-        this.frameHeight = image.height / rows;
+        this.frameWidth = parameters.size.width / cols;
+        this.frameHeight = parameters.size.height / rows;
         this.animations = animations;
         this.currentAnimation = animations["idle"];
-        console.log(this);
     }
 
     switchAnimation(key) {
         if (this.animations[key]) {
             this.currentAnimation = this.animations[key];
         } else {
-            console.error(`Animation ${key} does not exist`);
+            console.warn(`Animation ${key} does not exist`);
         }
     }
 
@@ -74,26 +94,21 @@ class AnimatedSprite extends Sprite {
         }
     }
 
-    draw(context, position = {x: 0, y: 0}, scale = {w: 1, h: 1}, offset = {x: 0, y: 0}) {
+    draw() {
         if (!this.currentAnimation) {
             return;
-        }
-
-        if (this.frameWidth === 0 || this.frameHeight === 0) {
-            this.frameWidth = this.image.width / this.cols;
-            this.frameHeight = this.image.height / this.rows;
         }
 
         const frame = this.currentAnimation.getCurrentFrame();
         let frameX = frame.col * this.frameWidth;
         let frameY = frame.row * this.frameHeight;
 
-        context.drawImage(
-            this.image,
+        this.render.drawImage(
+            this.texture,
             frameX, frameY,
             this.frameWidth, this.frameHeight,
-            position.x + offset.x, position.y + offset.y,
-            scale.w, scale.h
+            this.position.x, this.position.y,
+            this.frameWidth, this.frameHeight,
         );
     }
 }
