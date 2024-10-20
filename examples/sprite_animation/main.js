@@ -1,5 +1,5 @@
 import { Vector2 } from '../../math.js';
-import { GraphicParameters, SpriteFrame, AnimatedSprite, SpriteAnimation } from '../../graphic_object.js';
+import { GraphicParameters, SpriteFrame, AnimatedSprite, SpriteAnimation, WebGlContext } from '../../rendering.js';
 
 window.onload = function() {
   const canvas = document.getElementById('canvas');

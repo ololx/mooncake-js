@@ -1,4 +1,7 @@
-class GraphicsContext {
+export { GraphicParameters, SpriteFrame, AnimatedSprite, SpriteAnimation } from './graphic_object.js';
+
+
+export class GraphicsContext {
     drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {}
     clear() {}
     createTexture(image) {}
@@ -24,7 +27,7 @@ class Canvas2DContext extends GraphicsContext {
     }
 }
 
-class WebGlContext extends GraphicsContext {
+export class WebGlContext extends GraphicsContext {
     constructor(canvas) {
         super();
         this.canvas = canvas;
