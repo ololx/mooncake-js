@@ -1,3 +1,6 @@
+import { Vector2 } from '../../math.js';
+import { GraphicParameters, SpriteFrame, AnimatedSprite, SpriteAnimation } from '../../graphic_object.js';
+
 window.onload = function() {
   const canvas = document.getElementById('canvas');
   const context = new WebGlContext(canvas);

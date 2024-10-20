@@ -1,13 +1,13 @@
-//import { Vector2 } from 'math.js';
+import { Vector2 } from './math.js';
 
-class GraphicParameters {
+export class GraphicParameters {
 
     constructor(size = { width: 0, height: 0 }) {
         this.size = size;
     }
 }
 
-class GraphicObject {
+export class GraphicObject {
 
     constructor(render, position = Vector2.zero(), parameters = new GraphicParameters()) {
         this.render = render;
@@ -18,7 +18,7 @@ class GraphicObject {
     draw() {};
 }
 
-class Sprite extends GraphicObject {
+export class Sprite extends GraphicObject {
 
     constructor(render, position = Vector2.zero(), parameters = new GraphicParameters(), texture) {
         super(render, position, parameters);
@@ -36,7 +36,7 @@ class Sprite extends GraphicObject {
     }
 }
 
-class SpriteFrame {
+export class SpriteFrame {
 
     constructor(col, row, duration) {
         this.col = col;
@@ -45,7 +45,7 @@ class SpriteFrame {
     }
 }
 
-class SpriteAnimation {
+export class SpriteAnimation {
 
     constructor(frames) {
         this.frames = frames;
@@ -68,7 +68,7 @@ class SpriteAnimation {
     }
 }
 
-class AnimatedSprite extends Sprite {
+export class AnimatedSprite extends Sprite {
 
     constructor(render, position = Vector2.zero(), parameters = new GraphicParameters(), texture, rows, cols, animations) {
         super(render, position, parameters, texture);
