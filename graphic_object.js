@@ -27,7 +27,7 @@ export class Sprite extends GraphicObject {
 
     draw() {
         this.render.drawImage(
-            this.texture,
+            { source: this.texture, width: this.parameters.size.width, height: this.parameters.size.height },
             0, 0,
             this.parameters.size.width, this.parameters.size.height,
             this.position.x, this.position.y,
@@ -104,7 +104,7 @@ export class AnimatedSprite extends Sprite {
         let frameY = frame.row * this.frameHeight;
 
         this.render.drawImage(
-            this.texture,
+            { source: this.texture, width: this.parameters.size.width, height: this.parameters.size.height },
             frameX, frameY,
             this.frameWidth, this.frameHeight,
             this.position.x, this.position.y,
