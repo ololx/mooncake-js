@@ -49,40 +49,8 @@ export class Sprite extends GraphicObject {
     }
 }
 
-export class SpriteFrame {
-    
-    constructor(col, row, duration) {
-        this.col = col;
-        this.row = row;
-        this.duration = duration;
-    }
-}
-
-export class SpriteAnimation {
-    
-    constructor(frames) {
-        this.frames = frames;
-        this.currentFrameIndex = 0;
-        this.elapsedTime = 0.0;
-    }
-
-    update(deltaTime) {
-        const currentFrame = this.frames[this.currentFrameIndex];
-        this.elapsedTime += deltaTime;
-
-        if (this.elapsedTime >= currentFrame.duration) {
-            this.elapsedTime -= currentFrame.duration;
-            this.currentFrameIndex = (this.currentFrameIndex + 1) % this.frames.length;
-        }
-    }
-
-    getCurrentFrame() {
-        return this.frames[this.currentFrameIndex];
-    }
-}
-
 export class AnimatedSprite extends Sprite {
-    
+
     constructor(render, position = Vector2.zero(), size = Vector2.zero(), texture, rows, cols, animations) {
         super(render, position, size, texture);
         this.rows = rows;
@@ -123,5 +91,37 @@ export class AnimatedSprite extends Sprite {
             this.position.x, this.position.y,
             this.frameWidth, this.frameHeight
         );
+    }
+}
+
+export class SpriteFrame {
+    
+    constructor(col, row, duration) {
+        this.col = col;
+        this.row = row;
+        this.duration = duration;
+    }
+}
+
+export class SpriteAnimation {
+
+    constructor(frames) {
+        this.frames = frames;
+        this.currentFrameIndex = 0;
+        this.elapsedTime = 0.0;
+    }
+
+    update(deltaTime) {
+        const currentFrame = this.frames[this.currentFrameIndex];
+        this.elapsedTime += deltaTime;
+
+        if (this.elapsedTime >= currentFrame.duration) {
+            this.elapsedTime -= currentFrame.duration;
+            this.currentFrameIndex = (this.currentFrameIndex + 1) % this.frames.length;
+        }
+    }
+
+    getCurrentFrame() {
+        return this.frames[this.currentFrameIndex];
     }
 }
