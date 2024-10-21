@@ -1,5 +1,5 @@
 import { Vector2 } from '../../math.js';
-import { GraphicParameters, SpriteFrame, AnimatedSprite, SpriteAnimation, WebGlContext } from '../../rendering.js';
+import { SpriteFrame, AnimatedSprite, SpriteAnimation, WebGlContext } from '../../rendering.js';
 
 window.onload = function() {
   const canvas = document.getElementById('canvas');
@@ -23,7 +23,7 @@ window.onload = function() {
       idle: new SpriteAnimation(idleFrames)
     };
 
-    const sprite = new AnimatedSprite(context, Vector2.of((canvas.width / 2) - 102, (canvas.height / 2) + 102), new GraphicParameters({width: 1020, height: 204}), context.createTexture(image), 1, 5, animations);
+    const sprite = new AnimatedSprite(context, Vector2.of((canvas.width / 2) - 102, (canvas.height / 2) + 102), Vector2.of(1020, 204), context.createTexture(image), 1, 5, animations);
     sprite.switchAnimation('idle');
     console.log('Create sprite');
 

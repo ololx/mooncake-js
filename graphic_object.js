@@ -1,43 +1,56 @@
 import { Vector2 } from './math.js';
 
-export class GraphicParameters {
-
-    constructor(size = { width: 0, height: 0 }) {
-        this.size = size;
-    }
-}
-
 export class GraphicObject {
 
-    constructor(render, position = Vector2.zero(), parameters = new GraphicParameters()) {
-        this.render = render;
-        this.position = position;
-        this.parameters = parameters;
+    _position;
+
+    _size;
+
+    constructor(render, position = Vector2.zero(), size = Vector2.zero()) {
+        this._render = render;
+        this._position = position;
+        this._size = size;
+    }
+
+    get position() {
+        return this._position;
+    }
+
+    set position(position) {
+        this._position = position;
+    }
+
+    get size() {
+        return this._size;
+    }
+
+    set size(position) {
+        this._size = size;
     }
 
     draw() {};
 }
 
 export class Sprite extends GraphicObject {
-
-    constructor(render, position = Vector2.zero(), parameters = new GraphicParameters(), texture) {
-        super(render, position, parameters);
+    
+    constructor(render, position = Vector2.zero(), size = Vector2.zero(), texture) {
+        super(render, position, size);
         this.texture = texture;
     }
 
     draw() {
-        this.render.drawImage(
-            { source: this.texture, width: this.parameters.size.width, height: this.parameters.size.height },
+        this._render.drawImage(
+            { source: this.texture, width: this.size.x, height: this.size.y },
             0, 0,
-            this.parameters.size.width, this.parameters.size.height,
+            this.size.x, this.size.y,
             this.position.x, this.position.y,
-            this.parameters.size.width, this.parameters.size.height
+            this.size.x, this.size.y
         );
     }
 }
 
 export class SpriteFrame {
-
+    
     constructor(col, row, duration) {
         this.col = col;
         this.row = row;
@@ -46,7 +59,7 @@ export class SpriteFrame {
 }
 
 export class SpriteAnimation {
-
+    
     constructor(frames) {
         this.frames = frames;
         this.currentFrameIndex = 0;
@@ -69,13 +82,13 @@ export class SpriteAnimation {
 }
 
 export class AnimatedSprite extends Sprite {
-
-    constructor(render, position = Vector2.zero(), parameters = new GraphicParameters(), texture, rows, cols, animations) {
-        super(render, position, parameters, texture);
+    
+    constructor(render, position = Vector2.zero(), size = Vector2.zero(), texture, rows, cols, animations) {
+        super(render, position, size, texture);
         this.rows = rows;
         this.cols = cols;
-        this.frameWidth = parameters.size.width / cols;
-        this.frameHeight = parameters.size.height / rows;
+        this.frameWidth = size.x / cols;
+        this.frameHeight = size.y / rows;
         this.animations = animations;
         this.currentAnimation = animations["idle"];
     }
@@ -103,12 +116,12 @@ export class AnimatedSprite extends Sprite {
         let frameX = frame.col * this.frameWidth;
         let frameY = frame.row * this.frameHeight;
 
-        this.render.drawImage(
-            { source: this.texture, width: this.parameters.size.width, height: this.parameters.size.height },
+        this._render.drawImage(
+            { source: this.texture, width: this.size.x, height: this.size.y },
             frameX, frameY,
             this.frameWidth, this.frameHeight,
             this.position.x, this.position.y,
-            this.frameWidth, this.frameHeight,
+            this.frameWidth, this.frameHeight
         );
     }
 }
