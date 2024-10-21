@@ -9,7 +9,7 @@ export class GraphicContext {
 
 export class WebGlContext extends GraphicContext {
     constructor(canvas) {
-        super(canvas);
+        super();
         this.canvas = canvas;
         this.gl = canvas.getContext('webgl2');
 

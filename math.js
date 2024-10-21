@@ -1,8 +1,8 @@
 export class Vector2 {
 
-    #x = 0;
+    #x;
 
-    #y = 0;
+    #y;
 
     constructor(x = 0, y = 0) {
         this.#x = x;
@@ -83,5 +83,77 @@ export class Vector2 {
 
     equals(vector) {
         return this.#x === vector.x && this.#y === vector.y;
+    }
+}
+
+export class GeometricShape {
+
+    #position;
+
+    constructor(position = Vector2.zero()) {
+        this.#position = position;
+    }
+
+    get position() {
+        return this.#position;
+    }
+
+    set position(position) {
+        this.#position = position;
+    }
+
+    area() {}
+
+    perimeter() {}
+}
+
+class Parallelogram extends GeometricShape {
+
+    #sideA;
+
+    #sideB;
+    
+    constructor(position, sideA, sideB) {
+        super(position);
+        this.#sideA = sideA;
+        this.#sideB = sideB;
+    }
+
+    area() {
+        return Math.abs(this.#sideA.x * this.#sideB.y - this.#sideA.y * this.#sideB.x);
+    }
+
+    perimeter() {
+        return 2 * (this.#sideA.length() + this.#sideB.length());
+    }
+
+    vertices() {
+        const B = this.position.add(this.#sideA);
+        const D = this.position.add(this.#sideB);
+        const C = D.add(this.#sideA);
+        return { A: this.position, B, C, D };
+    }
+}
+
+class Rectangle extends Parallelogram {
+
+    constructor(position, width, height) {
+        const sideA = new Vector2(width, 0);
+        const sideB = new Vector2(0, height);
+        super(position, sideA, sideB);
+    }
+}
+
+class Square extends Rectangle {
+    constructor(position, side) {
+        super(position, side, side);
+    }
+}
+
+class Rhombus extends Parallelogram {
+    constructor(position, side, angle) {
+        const sideA = new Vector2(side, 0);
+        const sideB = new Vector2(side * Math.cos(angle), side * Math.sin(angle));
+        super(position, sideA, sideB);
     }
 }
