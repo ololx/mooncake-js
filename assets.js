@@ -1,80 +1,80 @@
 export const AssetTypes = Object.freeze({
     SPRITE: 'SPRITE',
     SPRITE_SHEET: 'SPRITE_SHEET',
+    TILE_MAP: 'TILE_MAP',
     TEXTURE: 'TEXTURE',
     AUDIO: 'AUDIO'
 });
 
 export class Asset {
 
-    _type;
+    #type;
 
-    _source;
+    #source;
 
-    _name;
+    #alias;
 
-    _loaded;
+    #meta;
 
-    _content;
+    #content;
 
-    constructor(type, source, name = source) {
-        if (!AssetTypes.hasOwnProperty(type)) {
-            throw Error("Illegal asset type " + type);
+    #loaded;
+
+    constructor(type, content, source, alias = source) {
+        if (!Object.values(AssetTypes).includes(type)) {
+            throw Error("Illegal asset type " + type + ". Expect one of " + Object.values(AssetTypes).join(', '));
         }
 
         this._type = type;
+        this._content = content;
         this._source = source;
-        this._name = name;
-        this._loaded = false;
+        this._alias = alias;
     }
 
-    get name() {
-        return this._name;
+    get source() {
+        return this._source;
     }
 
-    get isLoaded() {
-        return this._loaded;
+    get type() {
+        return this._type;
+    }
+
+    get alias() {
+        return this._alias;
     }
 
     get content() {
         return this._content;
     }
 
-    set content(content) {
-        return this._content;
+    get loaded() {
+        return this._loaded;
+    }
+
+    set loaded(loaded) {
+        this._loaded = loaded;
     }
 }
 
-export class Sprite extends Asset {
+export class Assets {
 
-    _type;
+    static loadSpriteSheet(source) {
+        return new Promise((resolve, reject) => {
+            const image = new Image();
+            image.src = source;
 
-    _source;
+            const asset = new Asset(AssetTypes.SPRITE_SHEET, image, source);
 
-    _name;
+            image.onload = function() {
+                console.log('Image loaded successfully');
+                asset.loaded = true;
+                resolve(asset);
+            };
 
-    _loaded;
-
-    _content;
-
-    constructor(source, name = source) {
-        super(AssetTypes.SPRITE, source, name)
-    }
-}
-
-export class SpriteSheet extends Asset {
-
-    _type;
-
-    _source;
-
-    _name;
-
-    _loaded;
-
-    _content;
-
-    constructor(source, name = source) {
-        super(AssetTypes.SPRITE, source, name)
+            image.onerror = function() {
+                console.log('Image load failed');
+                reject(new Error('Image load failed'));
+            };
+        });
     }
 }
