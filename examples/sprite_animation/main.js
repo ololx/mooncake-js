@@ -1,11 +1,12 @@
 import { Vector2 } from '../../math.js';
 import { SpriteFrame, AnimatedSprite, SpriteAnimation, WebGlContext } from '../../rendering.js';
-import { Assets, Asset, AssetTypes} from '../../assets.js';
+import { ResourceManager, Assets, Asset, AssetTypes} from '../../assets.js';
 
 window.onload = async function() {
   const canvas = document.getElementById('canvas');
   const context = new WebGlContext(canvas);
-  const cake = await Assets.loadSpriteSheet('cake.png');
+  const resources = new ResourceManager(canvas.getContext('webgl2'));
+  resources.importResource('cake.png', 'image')
 
   const idleFrames = [
     new SpriteFrame(0, 0, 150),
@@ -19,9 +20,9 @@ window.onload = async function() {
     idle: new SpriteAnimation(idleFrames)
   };
 
-  let texture = context.createTexture(cake.content);
+  const cake = await resources.loadResource('cake.png');
 
-  const sprite = new AnimatedSprite(context, Vector2.of((canvas.width / 2) - 102, (canvas.height / 2) + 102), Vector2.of(1020, 204), texture, 1, 5, animations);
+  const sprite = new AnimatedSprite(context, Vector2.of((canvas.width / 2) - 102, (canvas.height / 2) + 102), Vector2.of(1020, 204), cake, 1, 5, animations);
   sprite.switchAnimation('idle');
   console.log('Create sprite');
 

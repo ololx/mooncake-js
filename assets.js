@@ -97,7 +97,9 @@ export class ResourceManager {
             filePath,
             type,
             importSettings,
-            data: null,
+            source: null,
+            width: 0,
+            height: 0,
             usageCount: 0
         };
 
@@ -114,12 +116,12 @@ export class ResourceManager {
 
         const resource = this.resources.get(guid);
 
-        if (!resource.data) {
-            resource.data = await this._loadResourceData(resource);
+        if (!resource.source) {
+            resource.source = await this._loadResourceData(resource);
         }
 
         resource.usageCount += 1;
-        return resource.data;
+        return resource.source;
     }
 
     async _loadResourceData(resource) {
@@ -175,11 +177,11 @@ export class ResourceManager {
 
     unloadResource(guid) {
         const resource = this.resources.get(guid);
-        if (resource && resource.data) {
-            if (resource.type === 'image' && resource.data instanceof WebGLTexture) {
-                this.gl.deleteTexture(resource.data);
+        if (resource && resource.source) {
+            if (resource.type === 'image' && resource.source instanceof WebGLTexture) {
+                this.gl.deleteTexture(resource.source);
             }
-            resource.data = null;
+            resource.source = null;
         }
     }
 
