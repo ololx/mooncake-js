@@ -1,28 +1,26 @@
-export const AssetTypes = Object.freeze({
-    SPRITE: 'SPRITE',
-    SPRITE_SHEET: 'SPRITE_SHEET',
-    TILE_MAP: 'TILE_MAP',
+export const ResourceType = Object.freeze({
+    IMAGE: 'IMAGE',
     TEXTURE: 'TEXTURE',
     AUDIO: 'AUDIO'
 });
 
-export class Asset {
+export class Resource {
 
-    #type;
+    _type;
 
-    #source;
+    _source;
 
-    #alias;
+    _alias;
 
-    #meta;
+    _meta;
 
-    #content;
+    _content;
 
-    #loaded;
+    _loaded;
 
     constructor(type, content, source, alias = source) {
-        if (!Object.values(AssetTypes).includes(type)) {
-            throw Error("Illegal asset type " + type + ". Expect one of " + Object.values(AssetTypes).join(', '));
+        if (!Object.values(ResourceType).includes(type)) {
+            throw Error("Illegal resource type " + type + ". Expect one of " + Object.values(ResourceType).join(', '));
         }
 
         this._type = type;
@@ -56,25 +54,30 @@ export class Asset {
     }
 }
 
-export class Assets {
+export class Resources {
 
     static loadSpriteSheet(source) {
         return new Promise((resolve, reject) => {
             const image = new Image();
             image.src = source;
 
-            const asset = new Asset(AssetTypes.SPRITE_SHEET, image, source);
+            const asset = new Resource(ResourceType.IMAGE, image, source);
+
+            console.log("IIMG_1: " + image.complete)
 
             image.onload = function() {
                 console.log('Image loaded successfully');
                 asset.loaded = true;
                 resolve(asset);
+                console.log("IIMG_2: " + image.complete)
             };
 
             image.onerror = function() {
                 console.log('Image load failed');
                 reject(new Error('Image load failed'));
             };
+
+            console.log("IIMG_3: " + image.complete)
         });
     }
 }
