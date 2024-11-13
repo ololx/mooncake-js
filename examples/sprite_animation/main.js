@@ -1,13 +1,14 @@
 import { Vector2 } from '../../math.js';
 import { SpriteFrame, AnimatedSprite, SpriteAnimation, WebGlContext } from '../../rendering.js';
-import { ResourceManager, Resources, Resource, ResourceType} from '../../assets.js';
+import { ResourceManager, ResourceLoader, Resource, ResourceType} from '../../assets.js';
 
 window.onload = async function() {
   const canvas = document.getElementById('canvas');
   const context = new WebGlContext(canvas);
   const resources = new ResourceManager(canvas.getContext('webgl2'));
   resources.importResource('cake.png', 'image')
-  Resources.loadSpriteSheet('cake.png', 'image')
+  const resourcess = new ResourceLoader(canvas.getContext('webgl2'))
+  const ff = await resourcess.loadResource(ResourceType.IMAGE, 'cake.png');
 
   const idleFrames = [
     new SpriteFrame(0, 0, 150),

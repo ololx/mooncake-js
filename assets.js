@@ -5,80 +5,150 @@ export const ResourceType = Object.freeze({
 });
 
 export class Resource {
-
-    _type;
-
-    _source;
-
-    _alias;
-
-    _meta;
-
-    _content;
-
-    _loaded;
+    #type;
+    #source;
+    #alias;
+    #meta;
+    #content;
+    #loaded;
 
     constructor(type, content, source, alias = source) {
         if (!Object.values(ResourceType).includes(type)) {
             throw Error("Illegal resource type " + type + ". Expect one of " + Object.values(ResourceType).join(', '));
         }
 
-        this._type = type;
-        this._content = content;
-        this._source = source;
-        this._alias = alias;
+        this.#type = type;
+        this.#content = content;
+        this.#source = source;
+        this.#alias = alias;
+        this.#loaded = false;
     }
 
     get source() {
-        return this._source;
+        return this.#source;
     }
 
     get type() {
-        return this._type;
+        return this.#type;
     }
 
     get alias() {
-        return this._alias;
+        return this.#alias;
     }
 
     get content() {
-        return this._content;
+        return this.#content;
     }
 
     get loaded() {
-        return this._loaded;
+        return this.#loaded;
     }
 
     set loaded(loaded) {
-        this._loaded = loaded;
+        this.#loaded = loaded;
     }
 }
 
-export class Resources {
+export class ResourceCache {
+    #cache;
 
-    static loadSpriteSheet(source) {
+    constructor(cache = new Map()) {
+        this.cache = cache;
+    }
+
+    add(resource) {
+        this.cache.set(resource.alias, resource);
+    }
+
+    get(alias) {
+        return this.cache.get(alias);
+    }
+
+    has(alias) {
+        return this.cache.has(alias);
+    }
+
+    remove(alias) {
+        return this.cache.delete(alias);
+    }
+}
+
+class ImageLoader {
+    async load(source) {
         return new Promise((resolve, reject) => {
             const image = new Image();
             image.src = source;
-
-            const asset = new Resource(ResourceType.IMAGE, image, source);
-
-            console.log("IIMG_1: " + image.complete)
-
-            image.onload = function() {
-                console.log('Image loaded successfully');
-                asset.loaded = true;
-                resolve(asset);
-                console.log("IIMG_2: " + image.complete)
-            };
-
-            image.onerror = function() {
-                console.log('Image load failed');
-                reject(new Error('Image load failed'));
-            };
-
-            console.log("IIMG_3: " + image.complete)
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error(`Failed to load image from ${source}`));
         });
+    }
+}
+
+class TextureLoader {
+    constructor(gl) {
+        this.gl = gl;
+    }
+
+    async load(source) {
+        const imageLoader = new ImageLoader();
+        const image = await imageLoader.load(source);
+
+        const texture = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
+        this.gl.generateMipmap(this.gl.TEXTURE_2D);
+        return texture;
+    }
+}
+
+class AudioLoader {
+    async load(source) {
+        const audio = new Audio(source);
+        await new Promise((resolve, reject) => {
+            audio.onloadeddata = resolve;
+            audio.onerror = () => reject(new Error(`Failed to load audio from ${source}`));
+        });
+        return audio;
+    }
+}
+
+export class ResourceLoader {
+    constructor(gl) {
+        this.gl = gl;
+        this.resourceCache = new ResourceCache();
+        this.loaders = {
+            [ResourceType.IMAGE]: new ImageLoader(),
+            [ResourceType.TEXTURE]: new TextureLoader(gl),
+            [ResourceType.AUDIO]: new AudioLoader()
+        };
+    }
+
+    async loadResource(type, source, alias = source) {
+        if (this.resourceCache.has(alias)) {
+            const cachedResource = this.resourceCache.get(alias);
+            return cachedResource.content;
+        }
+
+        const loader = this.loaders[type];
+        if (!loader) {
+            throw new Error(`No loader available for resource type: ${type}`);
+        }
+
+        const content = await loader.load(source);
+
+        const resource = new Resource(type, content, source, alias);
+        resource.loaded = true;
+        this.resourceCache.add(resource);
+
+        return content;
+    }
+
+    releaseResource(alias) {
+        const resource = this.resourceCache.get(alias);
+        if (resource && resource.type === ResourceType.TEXTURE) {
+            this.gl.deleteTexture(resource.content);
+        }
+        this.resourceCache.remove(alias);
     }
 }
 
