@@ -49,32 +49,76 @@ export class Resource {
     }
 }
 
-export class ResourceCache {
-    #cache;
+class ResourceCache {
+    #resources = new Map();
+    #refCounts = new Map();
 
-    constructor(cache = new Map()) {
-        this.cache = cache;
+    add(key, resource) {
+        if (this.#resources.has(key)) {
+            console.warn(`Resource with key "${key}" already exists in cache.`);
+            return;
+        }
+        this.#resources.set(key, resource);
+        this.#refCounts.set(key, 0);
     }
 
-    add(resource) {
-        this.cache.set(resource.alias, resource);
+    put(key) {
+        if (!this.#resources.has(key)) {
+            return undefined;
+        }
+        const currentRefCount = this.#refCounts.get(key);
+        this.#refCounts.set(key, currentRefCount + 1);
+        return this.#resources.get(key);
     }
 
-    get(alias) {
-        return this.cache.get(alias);
+    delete(key) {
+        if (!this.#resources.has(key)) {
+            console.warn(`Resource with key "${key}" not found in cache.`);
+            return;
+        }
+
+        const currentRefCount = this.#refCounts.get(key);
+        if (currentRefCount <= 0) {
+            console.warn(`Resource with key "${key}" has no references to delete.`);
+            return;
+        }
+
+        const newRefCount = currentRefCount - 1;
+        this.#refCounts.set(key, newRefCount);
+
+        if (newRefCount === 0) {
+            this.#resources.delete(key);
+            this.#refCounts.delete(key);
+        }
     }
 
-    has(alias) {
-        return this.cache.has(alias);
+    deleteForce(key) {
+        if (!this.#resources.has(key)) {
+            console.warn(`Resource with key "${key}" not found in cache.`);
+            return;
+        }
+        this.#resources.delete(key);
+        this.#refCounts.delete(key);
     }
 
-    remove(alias) {
-        return this.cache.delete(alias);
+    clear() {
+        this.#resources.clear();
+        this.#refCounts.clear();
+    }
+
+    has(key) {
+        return this.#resources.has(key);
     }
 }
 
-class ImageLoader {
-    async load(source) {
+class ResourceLoadingStrategy {
+    load(source) {
+        return new Promise((resolve, reject) => {resolve();});
+    }
+}
+
+class ImageLoading extends ResourceLoadingStrategy {
+    load(source) {
         return new Promise((resolve, reject) => {
             const image = new Image();
             image.src = source;
@@ -84,78 +128,50 @@ class ImageLoader {
     }
 }
 
-class TextureLoader {
-    constructor(gl) {
-        this.gl = gl;
-    }
-
-    async load(source) {
-        const imageLoader = new ImageLoader();
-        const image = await imageLoader.load(source);
-
-        const texture = this.gl.createTexture();
-        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
-        this.gl.generateMipmap(this.gl.TEXTURE_2D);
-        return texture;
-    }
-}
-
-class AudioLoader {
-    async load(source) {
-        const audio = new Audio(source);
-        await new Promise((resolve, reject) => {
-            audio.onloadeddata = resolve;
-            audio.onerror = () => reject(new Error(`Failed to load audio from ${source}`));
+class AudioLoading extends ResourceLoadingStrategy {
+    load(source) {
+        return new Promise((resolve, reject) => {
+            const audio = new Audio();
+            audio.src = source;
+            audio.onload
+            audio.onload = () => resolve(audio);
+            audio.onerror = () => reject(new Error(`Failed to load image from ${source}`));
         });
-        return audio;
     }
 }
 
 export class ResourceLoader {
-    constructor(gl) {
-        this.gl = gl;
-        this.resourceCache = new ResourceCache();
-        this.loaders = {
-            [ResourceType.IMAGE]: new ImageLoader(),
-            [ResourceType.TEXTURE]: new TextureLoader(gl),
-            [ResourceType.AUDIO]: new AudioLoader()
+    #resourceLoadingStrategies;
+
+    constructor() {
+        //FIXME::extract to injection
+        this.#resourceLoadingStrategies = {
+            [ResourceType.IMAGE]: new ImageLoading(),
+            [ResourceType.AUDIO]: new AudioLoading()
         };
     }
 
-    async loadResource(type, source, alias = source) {
-        if (this.resourceCache.has(alias)) {
-            const cachedResource = this.resourceCache.get(alias);
-            return cachedResource.content;
-        }
-
-        const loader = this.loaders[type];
-        if (!loader) {
+    load(type, source) {
+        const loading = this.#resourceLoadingStrategies[type];
+        if (!loading) {
             throw new Error(`No loader available for resource type: ${type}`);
         }
 
-        const content = await loader.load(source);
-
-        const resource = new Resource(type, content, source, alias);
-        resource.loaded = true;
-        this.resourceCache.add(resource);
-
-        return content;
-    }
-
-    releaseResource(alias) {
-        const resource = this.resourceCache.get(alias);
-        if (resource && resource.type === ResourceType.TEXTURE) {
-            this.gl.deleteTexture(resource.content);
-        }
-        this.resourceCache.remove(alias);
+        return loading.load(source);
     }
 }
 
 export class ResourceManager {
+
+
     constructor(gl) {
         this.gl = gl;
         this.resources = new Map();
+        /*if(resourceCache == null) {
+            throw Error("ResourceCache must be defined");
+        }
+
+        this.#resourceCache = resourceCache;*/
     }
 
     importResource(filePath, type, importSettings = { compressed: false, format: 'default' }) {
