@@ -1,6 +1,6 @@
 import {Vector2} from '../../math.js';
 import {SpriteFrame, AnimatedSprite, SpriteAnimation, WebGlContext} from '../../rendering.js';
-import {ResourceManager, ResourceLoader, Resource, ResourceType} from '../../assets.js';
+import {ResourceManager, ResourceType} from '../../assets.js';
 
 window.onload = async function () {
     const canvas = document.getElementById('canvas');
