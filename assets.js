@@ -1,10 +1,12 @@
-export const ResourceType = Object.freeze({
+export {ResourceType, Resource, ResourceLoader, ResourceManager}
+
+const ResourceType = Object.freeze({
     IMAGE: 'IMAGE',
     TEXTURE: 'TEXTURE',
     AUDIO: 'AUDIO'
 });
 
-export class Resource {
+class Resource {
     #type;
     #source;
     #alias;
@@ -112,12 +114,14 @@ class ResourceCache {
 }
 
 class ResourceLoadingStrategy {
+
     load(source) {
         return new Promise((resolve, reject) => {resolve();});
     }
 }
 
 class ImageLoading extends ResourceLoadingStrategy {
+
     load(source) {
         return new Promise((resolve, reject) => {
             const image = new Image();
@@ -125,6 +129,34 @@ class ImageLoading extends ResourceLoadingStrategy {
             image.onload = () => resolve(image);
             image.onerror = () => reject(new Error(`Failed to load image from ${source}`));
         });
+    }
+}
+
+class TextureLoading extends ResourceLoadingStrategy {
+
+    constructor(gl) {
+        super();
+        this.gl = gl;
+    }
+
+    load(source) {
+        return new Promise((resolve, reject) => {
+            const image = new Image();
+            image.src = source;
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error(`Failed to load texture from ${source}`));
+        })
+        .then(image => this.createTextureFromImage(image))
+        .catch(e => new Error(`Failed to load texture from ${source}`));
+    }
+
+    createTextureFromImage(image) {
+        const gl = this.gl;
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        return texture;
     }
 }
 
@@ -140,13 +172,13 @@ class AudioLoading extends ResourceLoadingStrategy {
     }
 }
 
-export class ResourceLoader {
+class ResourceLoader {
     #resourceLoadingStrategies;
 
-    constructor() {
-        //FIXME::extract to injection
+    constructor(gl) {
         this.#resourceLoadingStrategies = {
             [ResourceType.IMAGE]: new ImageLoading(),
+            [ResourceType.TEXTURE]: new TextureLoading(gl),
             [ResourceType.AUDIO]: new AudioLoading()
         };
     }
@@ -161,17 +193,12 @@ export class ResourceLoader {
     }
 }
 
-export class ResourceManager {
-
+class ResourceManager {
 
     constructor(gl) {
         this.gl = gl;
         this.resources = new Map();
-        /*if(resourceCache == null) {
-            throw Error("ResourceCache must be defined");
-        }
-
-        this.#resourceCache = resourceCache;*/
+        this.resourceLoader = new ResourceLoader(gl);
     }
 
     importResource(filePath, type, importSettings = { compressed: false, format: 'default' }) {
@@ -193,6 +220,7 @@ export class ResourceManager {
         };
 
         this.resources.set(guid, resourceMeta);
+
         return resourceMeta;
     }
 
@@ -206,50 +234,11 @@ export class ResourceManager {
         const resource = this.resources.get(guid);
 
         if (!resource.source) {
-            resource.source = await this._loadResourceData(resource);
+            resource.source = await this.resourceLoader.load(resource.type, resource.filePath);
         }
 
         resource.usageCount += 1;
         return resource.source;
-    }
-
-    async _loadResourceData(resource) {
-        if (resource.type === 'image') {
-            return await this.loadImage(resource.filePath, resource.importSettings);
-        } else if (resource.type === 'audio') {
-            return await this.loadAudio(resource.filePath);
-        } else {
-            throw new Error(`Unknown resource type: ${resource.type}`);
-        }
-    }
-
-    async loadImage(filePath, importSettings) {
-        const image = await new Promise((resolve, reject) => {
-            const img = new Image();
-            img.src = filePath;
-            img.onload = () => resolve(img);
-            img.onerror = reject;
-        });
-
-        if (importSettings.compressed) {
-        }
-
-        return this.createTextureFromImage(image);
-    }
-
-    async loadAudio(filePath) {
-        const audio = new Audio(filePath);
-        await audio.load();
-        return audio;
-    }
-
-    createTextureFromImage(image) {
-        const gl = this.gl;
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-        gl.generateMipmap(gl.TEXTURE_2D);
-        return texture;
     }
 
     releaseResource(filePath) {

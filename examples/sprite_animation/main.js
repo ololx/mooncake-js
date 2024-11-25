@@ -6,11 +6,7 @@ window.onload = async function () {
     const canvas = document.getElementById('canvas');
     const context = new WebGlContext(canvas);
     const resources = new ResourceManager(canvas.getContext('webgl2'));
-    resources.importResource('cake.png', 'image')
-    const resourcess = new ResourceLoader()
-    const ff = resourcess.load(ResourceType.IMAGE, 'cake.png').then(image => image.width);
-    console.log(`IMAGE FF ${await ff}`);
-
+    resources.importResource('cake.png', ResourceType.TEXTURE)
     const idleFrames = [
         new SpriteFrame(0, 0, 150),
         new SpriteFrame(1, 0, 100),
